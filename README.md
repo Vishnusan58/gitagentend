@@ -3,46 +3,64 @@
 ![GitHub language count](https://img.shields.io/github/languages/count/Vishnusan58/gitagentend)
 ![GitHub top language](https://img.shields.io/github/languages/top/Vishnusan58/gitagentend?color=yellow)
 ![Last Updated](https://img.shields.io/badge/Last%20Updated-2025--03--26-brightgreen)
+![Status](https://img.shields.io/badge/Status-Active-success)
 
-> An intelligent code optimization and generation toolkit.
+> A comprehensive Python-based toolkit for code optimization and generation, designed to enhance code quality and development efficiency.
 
 ## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+1. [Overview](#overview)
+2. [System Requirements](#system-requirements)
+3. [Installation Guide](#installation-guide)
+4. [Detailed Implementation Steps](#detailed-implementation-steps)
+5. [Configuration](#configuration)
+6. [Usage Examples](#usage-examples)
+7. [API Reference](#api-reference)
+8. [Troubleshooting](#troubleshooting)
+9. [Contributing](#contributing)
+10. [Version History](#version-history)
 
 ## Overview
 
-GitAgentEnd is a sophisticated toolkit designed to generate optimized code. The project combines Python's powerful processing capabilities with a user-friendly web interface to deliver efficient code optimization solutions.
+GitAgentEnd is an intelligent code optimization system that leverages Python's capabilities to analyze, optimize, and generate efficient code. The project combines backend processing power with a user-friendly web interface.
 
-## Features
-
-- 🔄 Code optimization algorithms
+### Key Features
+- 🔄 Automated code optimization
 - 🎯 Intelligent code generation
 - 💻 Web-based interface
-- 🛠️ Python-powered backend
 - 📊 Performance analytics
+- 🔍 Code quality metrics
 
-## Tech Stack
+## System Requirements
 
-### Backend (84.6%)
-- Python 3.x
-- [List your Python frameworks]
+### Minimum Requirements
+- Python 3.8+
+- 4GB RAM
+- 2GB free disk space
+- Modern web browser
 
-### Frontend (15.4%)
-- HTML
-- [List additional frontend technologies]
+### Recommended Requirements
+- Python 3.10+
+- 8GB RAM
+- 5GB free disk space
+- Chrome/Firefox (latest version)
 
-## Getting Started
+## Installation Guide
 
-### Prerequisites
+### 1. Basic Setup
 
 ```bash
-- Python 3.x
-- Git
+# Clone repository
+git clone https://github.com/Vishnusan58/gitagentend.git
+cd gitagentend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+.\venv\Scripts\activate
+# Unix/macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
