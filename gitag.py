@@ -236,6 +236,7 @@ async def analyze_repository(repo_url: str, github_token: str | None = None):
             3. Most important optimization opportunities
             4. Best example of optimized code
             5. Priority recommendations
+            6. Show one code that can be optimized
 
             Format using markdown for readability.
             """

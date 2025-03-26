@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Code Analysis Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --code-bg: #f6f8fa;
+            --border-color: #e1e4e8;
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .card {
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .commit-info {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .analysis-content {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        }
+
+        .analysis-content pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .analysis-content code {
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 85%;
+        }
+
+        .timestamp {
+            color: #586069;
+            font-size: 0.9em;
+        }
+
+        .author-badge {
+            background-color: #0366d6;
+            color: white;
+            padding: 0.25em 0.5em;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .error-message {
+            background-color: #ffebe9;
+            border: 1px solid #ff8182;
+            color: #cf222e;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5 mb-5">
+        <h1 class="mb-4">GitHub Code Analysis Dashboard</h1>
+
+        <!-- Error Message Display -->
+        {% if error_message %}
+        <div class="error-message">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        <!-- Analysis Results -->
+        {% if analyses %}
+            {% for repo_url, analysis in analyses.items() %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="analysis-header">
+                        <h3 class="card-title">
+                            <svg height="16" viewBox="0 0 16 16" width="16" class="mb-1">
+                                <path fill="#586069" d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"></path>
+                            </svg>
+                            {{ repo_url }}
+                        </h3>
+                        <p class="timestamp">Analyzed: {{ analysis.timestamp|format_datetime }}</p>
+                    </div>
+
+                    {% if analysis.commit_message %}
+                    <div class="commit-info">
+                        <span class="author-badge">{{ analysis.commit_author }}</span>
+                        <span class="ms-2">{{ analysis.commit_message }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="analysis-content">
+                        {{ analysis.result }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <p class="mb-0">No analysis results available yet. Push changes to your repository to trigger analysis.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+    </script>
+</body>
+</html>
