@@ -1,17 +1,32 @@
-import asyncio
-import hashlib
-import hmac
 import os
-from datetime import datetime
-
-import markdown2
-from flask import Flask, request, jsonify, render_template
+import sys
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
+import hmac
 from markupsafe import Markup
-
-from gitagent import summarize_repo_with_content
+import hashlib
+import asyncio
+import markdown2
+import re
+from datetime import datetime
+from functools import wraps
+# Import the required functions from gitagent.py
+from gitagent import summarize_repo_with_content, extract_owner_repo
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+# Register the template filter properly
+@app.template_filter('format_datetime')
+def format_datetime(timestamp):
+    """Format datetime for display"""
+    try:
+        if isinstance(timestamp, str):
+            dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S UTC')
+        else:
+            dt = timestamp
+        return dt.strftime('%B %d, %Y at %H:%M:%S UTC')
+    except Exception:
+        return timestamp
+
 
 # Load GitHub Webhook Secret from environment variable
 GITHUB_SECRET = "a3b9f4e2c1d8e7f3a6b1c0d5e4f7g2h3"
@@ -33,17 +48,19 @@ def verify_signature(payload, signature):
 
 def format_markdown(text):
     """Convert markdown to HTML with syntax highlighting."""
-    return Markup(markdown2.markdown(text, extras=["fenced-code-blocks", "tables"]))
+    return Markup(markdown2.markdown(text, extras=[
+        "fenced-code-blocks",
+        "tables",
+        "break-on-newline",
+        "header-ids",
+        "task-lists"
+    ]))
 
 
-@app.template_filter('format_datetime')
-def format_datetime(timestamp):
-    """Format datetime for display"""
-    try:
-        dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S UTC')
-        return dt.strftime('%B %d, %Y at %H:%M:%S UTC')
-    except:
-        return timestamp
+def is_valid_github_url(url):
+    """Validate GitHub repository URL format."""
+    pattern = r'^https?://github\.com/[\w-]+/[\w.-]+/?$'
+    return bool(re.match(pattern, url))
 
 
 @app.route('/')
@@ -55,9 +72,68 @@ def index():
             'timestamp': analysis['timestamp'],
             'result': format_markdown(analysis['result']),
             'commit_message': analysis.get('commit_message', ''),
-            'commit_author': analysis.get('commit_author', '')
+            'commit_author': analysis.get('commit_author', ''),
+            'repo_name': repo_url.split('/')[-1]
         }
-    return render_template('index.html', analyses=formatted_analyses)
+
+    current_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+
+    return render_template('index.html',
+                           analyses=formatted_analyses,
+                           current_user="Vishnusan58",
+                           current_time=current_time)
+
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    """Handle manual repository analysis requests."""
+
+    async def run_analysis():
+        repo_url = request.form.get('repo_url', '').strip()
+
+        if not repo_url:
+            flash('Please provide a repository URL', 'error')
+            return redirect(url_for('index'))
+
+        if not is_valid_github_url(repo_url):
+            flash('Invalid GitHub repository URL format', 'error')
+            return redirect(url_for('index'))
+
+        try:
+            # Show processing status
+            flash(f'Processing repository: {repo_url}...', 'info')
+
+            # Get GitHub token from environment
+            github_token = os.getenv("GITHUB_TOKEN")
+
+            # Validate repository access
+            owner, repo = extract_owner_repo(repo_url)
+            if not owner or not repo:
+                flash('Invalid repository URL format', 'error')
+                return redirect(url_for('index'))
+
+            # Use the summarize_repo_with_content function from gitagent.py
+            analysis = await summarize_repo_with_content(repo_url, github_token)
+
+            if analysis and not analysis.startswith("Error"):
+                timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+                analysis_results[repo_url] = {
+                    'timestamp': timestamp,
+                    'result': analysis,
+                    'commit_message': 'Manual Analysis',
+                    'commit_author': request.form.get('username', 'Anonymous')
+                }
+                flash('Repository analysis completed successfully!', 'success')
+            else:
+                flash(f'Analysis failed: {analysis}', 'error')
+
+            return redirect(url_for('index'))
+
+        except Exception as e:
+            flash(f'Error during analysis: {str(e)}', 'error')
+            return redirect(url_for('index'))
+
+    return asyncio.run(run_analysis())
 
 
 @app.route('/webhook', methods=['POST'])
@@ -69,20 +145,15 @@ def webhook():
         payload = request.data
 
         if not verify_signature(payload, signature):
-            print("❌ Invalid signature. Rejecting request.")
             return jsonify({"message": "Invalid signature"}), 403
 
         data = request.json
         if "ref" in data and "repository" in data:
-            # Only process push events to the main/master branch
             branch = data["ref"].split('/')[-1]
             if branch not in ['main', 'master']:
                 return jsonify({"message": f"Ignoring push to {branch} branch"}), 200
 
             repo_url = data["repository"]["html_url"]
-            print(f"🔄 Change detected in repository: {repo_url}")
-
-            # Extract commit information
             commit_info = data.get("head_commit", {})
             commit_message = commit_info.get("message", "No commit message")
             commit_author = commit_info.get("author", {}).get("name", "Unknown")
@@ -91,39 +162,57 @@ def webhook():
                 github_token = os.getenv("GITHUB_TOKEN")
                 analysis = await summarize_repo_with_content(repo_url, github_token)
 
-                # Store the analysis result with additional information
-                timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-                analysis_results[repo_url] = {
-                    'timestamp': timestamp,
-                    'result': analysis,
-                    'commit_message': commit_message,
-                    'commit_author': commit_author
-                }
-
-                print("✅ Analysis completed successfully!")
-                print(f"📝 Commit by {commit_author}: {commit_message}")
-
-                return jsonify({
-                    "message": "Analysis completed successfully",
-                    "repository": repo_url,
-                    "timestamp": timestamp,
-                    "commit_info": {
-                        "author": commit_author,
-                        "message": commit_message
+                if analysis and not analysis.startswith("Error"):
+                    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+                    analysis_results[repo_url] = {
+                        'timestamp': timestamp,
+                        'result': analysis,
+                        'commit_message': commit_message,
+                        'commit_author': commit_author
                     }
-                }), 200
+                    return jsonify({
+                        "message": "Analysis completed successfully",
+                        "repository": repo_url,
+                        "timestamp": timestamp,
+                        "commit_info": {
+                            "author": commit_author,
+                            "message": commit_message
+                        }
+                    }), 200
+                else:
+                    return jsonify({"message": f"Analysis failed: {analysis}"}), 500
 
             except Exception as e:
-                error_message = f"❌ Error during analysis: {str(e)}"
-                print(error_message)
-                return jsonify({"message": error_message}), 500
+                return jsonify({"message": str(e)}), 500
 
         return jsonify({"message": "Invalid webhook event"}), 400
 
     return asyncio.run(process_webhook())
 
 
+@app.route('/clear/<path:repo_url>')
+def clear_analysis(repo_url):
+    """Clear a specific analysis result."""
+    if repo_url in analysis_results:
+        del analysis_results[repo_url]
+        flash('Analysis cleared successfully', 'success')
+    return redirect(url_for('index'))
+
+
+# Add status endpoint to check analysis progress
+@app.route('/status/<path:repo_url>')
+def analysis_status(repo_url):
+    """Check the status of an analysis."""
+    if repo_url in analysis_results:
+        return jsonify({
+            "status": "completed",
+            "result": analysis_results[repo_url]
+        })
+    return jsonify({
+        "status": "not_found"
+    }), 404
+
+
 if __name__ == '__main__':
-    # Create templates directory if it doesn't exist
     os.makedirs('templates', exist_ok=True)
     app.run(host='0.0.0.0', port=5000, debug=True)

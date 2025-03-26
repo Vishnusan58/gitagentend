@@ -3,112 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Code Analysis Results</title>
+    <title>GitHub Code Analysis Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet">
     <style>
         :root {
-            --code-bg: #f6f8fa;
-            --border-color: #e1e4e8;
+            --primary-bg: #0d1117;
+            --secondary-bg: #161b22;
+            --text-primary: #ffffff;
+            --text-secondary: #c9d1d9;
+            --border-color: #30363d;
+            --accent-color: #2ea043;
+            --danger-color: #f85149;
+            --link-color: #58a6ff;
+            --header-bg: #010409;
+            --card-bg: #0d1117;
         }
 
         body {
-            background-color: #f8f9fa;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            min-height: 100vh;
         }
 
-        .container {
+        .navbar {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            color: var(--text-primary) !important;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+        }
+
+        .datetime-info {
+            color: var(--text-secondary);
+            margin-right: 20px;
+            font-size: 0.9rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+        }
+
+        .main-container {
             max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .analysis-form {
+            background-color: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-control, .form-control:focus {
+            background-color: var(--primary-bg);
+            border-color: var(--border-color);
+            color: white !important;
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #2c974b;
+            border-color: #2c974b;
         }
 
         .card {
+            background-color: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            border-radius: 6px;
             margin-bottom: 1.5rem;
+            color: var(--text-primary);
         }
 
-        .analysis-header {
+        .card-header {
+            background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .repo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .repo-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .commit-info {
-            background-color: var(--code-bg);
+            background-color: var(--primary-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .analysis-content {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-        }
-
-        .analysis-content pre {
-            background-color: var(--code-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 1rem;
-            overflow-x: auto;
-        }
-
-        .analysis-content code {
-            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 85%;
-        }
-
-        .timestamp {
-            color: #586069;
-            font-size: 0.9em;
+            margin: 1rem 0;
+            color: var(--text-primary);
         }
 
         .author-badge {
-            background-color: #0366d6;
+            background-color: var(--accent-color);
             color: white;
-            padding: 0.25em 0.5em;
-            border-radius: 3px;
+            padding: 0.25em 0.75em;
+            border-radius: 1rem;
             font-size: 0.85em;
+            font-weight: 500;
         }
 
-        .error-message {
-            background-color: #ffebe9;
-            border: 1px solid #ff8182;
-            color: #cf222e;
+        .analysis-content {
+            padding: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .analysis-content pre {
+            background-color: var(--primary-bg) !important;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .flash-message {
+            background-color: var(--secondary-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
             padding: 1rem;
             border-radius: 6px;
             margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .clear-analysis {
+            color: var(--danger-color);
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .clear-analysis:hover {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            background-color: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+        }
+
+        /* Markdown content styles */
+        .analysis-content h1, .analysis-content h2, .analysis-content h3,
+        .analysis-content h4, .analysis-content h5, .analysis-content h6 {
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .analysis-content p, .analysis-content li {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .analysis-content code {
+            color: var(--text-primary);
+            background-color: var(--primary-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5 mb-5">
-        <h1 class="mb-4">GitHub Code Analysis Dashboard</h1>
-
-        <!-- Error Message Display -->
-        {% if error_message %}
-        <div class="error-message">
-            {{ error_message }}
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class='bx bx-code-alt'></i>
+                GitHub Code Analyzer
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="datetime-info">
+                    <i class='bx bx-time'></i>
+                    <span id="current-time">{{ current_time }}</span>
+                </div>
+                <div class="user-info">
+                    <img src="https://github.com/{{ current_user }}.png" alt="{{ current_user }}" class="user-avatar">
+                    <span>{{ current_user }}</span>
+                </div>
+            </div>
         </div>
-        {% endif %}
+    </nav>
+
+    <div class="main-container">
+        <!-- Analysis Form -->
+        <div class="analysis-form">
+            <h2 class="mb-4" style="color: var(--text-primary);">Analyze Repository</h2>
+            <form id="analysis-form" action="{{ url_for('analyze') }}" method="POST">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label for="repo_url" class="form-label">GitHub Repository URL</label>
+                        <input type="url" class="form-control" id="repo_url" name="repo_url"
+                               placeholder="https://github.com/username/repository"
+                               pattern="^https?://github\.com/[\w-]+/[\w.-]+/?$"
+                               required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="username" class="form-label">Your Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               value="{{ current_user }}" readonly>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class='bx bx-analyze'></i> Analyze Repository
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
         <!-- Analysis Results -->
         {% if analyses %}
             {% for repo_url, analysis in analyses.items() %}
             <div class="card">
-                <div class="card-body">
-                    <div class="analysis-header">
-                        <h3 class="card-title">
-                            <svg height="16" viewBox="0 0 16 16" width="16" class="mb-1">
-                                <path fill="#586069" d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"></path>
-                            </svg>
-                            {{ repo_url }}
+                <div class="card-header">
+                    <div class="repo-header">
+                        <h3 class="repo-title">
+                            <i class='bx bx-git-repo-forked'></i>
+                            {{ analysis.repo_name }}
                         </h3>
-                        <p class="timestamp">Analyzed: {{ analysis.timestamp|format_datetime }}</p>
+                        <a href="{{ url_for('clear_analysis', repo_url=repo_url) }}"
+                           class="clear-analysis"
+                           onclick="return confirm('Are you sure you want to clear this analysis?')">
+                            <i class='bx bx-trash'></i> Clear Analysis
+                        </a>
                     </div>
+                    <p class="timestamp">
+                        <i class='bx bx-time'></i> {{ analysis.timestamp }}
+                    </p>
+                </div>
 
+                <div class="card-body">
                     {% if analysis.commit_message %}
                     <div class="commit-info">
-                        <span class="author-badge">{{ analysis.commit_author }}</span>
+                        <span class="author-badge">
+                            <i class='bx bx-user'></i> {{ analysis.commit_author }}
+                        </span>
                         <span class="ms-2">{{ analysis.commit_message }}</span>
                     </div>
                     {% endif %}
@@ -120,20 +351,75 @@
             </div>
             {% endfor %}
         {% else %}
-        <div class="card">
-            <div class="card-body text-center">
-                <p class="mb-0">No analysis results available yet. Push changes to your repository to trigger analysis.</p>
+            <div class="no-results">
+                <i class='bx bx-search-alt' style="font-size: 3rem;"></i>
+                <h3 class="mt-3">No Analysis Results Yet</h3>
+                <p>Enter a GitHub repository URL above to start analyzing.</p>
             </div>
-        </div>
         {% endif %}
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading">
+        <div class="loading-content">
+            <div class="spinner mb-3"></div>
+            <h4>Analyzing Repository...</h4>
+            <p>This may take a few minutes depending on the repository size.</p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
+            // Initialize syntax highlighting
             document.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightBlock(block);
+            });
+
+            // Update datetime display
+            function updateDateTime() {
+                const now = new Date();
+                const formatted = now.toISOString()
+                    .replace('T', ' ')
+                    .replace(/\.\d+Z$/, '')
+                    .concat(' UTC');
+                document.getElementById('current-time').textContent = formatted;
+            }
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+
+            // Handle form submission and show loading overlay
+            const form = document.getElementById('analysis-form');
+            const loading = document.querySelector('.loading');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                loading.classList.add('active');
+
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this)
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        loading.classList.remove('active');
+                        alert('Error analyzing repository');
+                    }
+                }).catch(error => {
+                    loading.classList.remove('active');
+                    console.error('Error:', error);
+                });
+            });
+
+            // Auto-dismiss flash messages
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.classList.remove('show');
+                    setTimeout(() => message.remove(), 150);
+                }, 5000);
             });
         });
     </script>
